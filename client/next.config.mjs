@@ -26,6 +26,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "www.thepinnaclelist.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
     ],
   },
 };
