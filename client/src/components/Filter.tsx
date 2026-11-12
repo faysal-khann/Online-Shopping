@@ -1,8 +1,9 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { Category } from "../lib/api";
 
-const Filter = () => {
+const Filter = ({ categories = [] }: { categories?: Category[] }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { replace } = useRouter();
@@ -12,7 +13,9 @@ const Filter = () => {
   ) => {
     const { name, value } = e.target;
     const params = new URLSearchParams(searchParams);
-    params.set(name, value);
+    if (value) params.set(name, value);
+    else params.delete(name);
+    params.delete("page"); // a new filter always starts from page 1
     replace(`${pathname}?${params.toString()}`);
   };
 
@@ -21,11 +24,11 @@ const Filter = () => {
       <div className="flex gap-6 flex-wrap">
         <select
           name="type"
-          id=""
+          defaultValue={searchParams.get("type") ?? ""}
           className="py-2 px-4 rounded-2xl text-xs font-medium bg-[#EBEDED]"
           onChange={handleFilterChange}
         >
-          <option>Type</option>
+          <option value="">Type</option>
           <option value="physical">Physical</option>
           <option value="digital">Digital</option>
         </select>
@@ -33,6 +36,7 @@ const Filter = () => {
           type="text"
           name="min"
           placeholder="min price"
+          defaultValue={searchParams.get("min") ?? ""}
           className="text-xs rounded-2xl pl-2 w-24 ring-1 ring-gray-400"
           onChange={handleFilterChange}
         />
@@ -40,39 +44,36 @@ const Filter = () => {
           type="text"
           name="max"
           placeholder="max price"
+          defaultValue={searchParams.get("max") ?? ""}
           className="text-xs rounded-2xl pl-2 w-24 ring-1 ring-gray-400"
           onChange={handleFilterChange}
         />
-        {/* TODO: Filter Categories */}
         <select
           name="cat"
+          defaultValue={searchParams.get("cat") ?? ""}
           className="py-2 px-4 rounded-2xl text-xs font-medium bg-[#EBEDED]"
           onChange={handleFilterChange}
         >
-          <option>Category</option>
-          <option value="">New Arrival</option>
-          <option value="">Popular</option>
-        </select>
-        <select
-          name=""
-          id=""
-          className="py-2 px-4 rounded-2xl text-xs font-medium bg-[#EBEDED]"
-        >
-          <option>All Filters</option>
+          <option value="">Category</option>
+          {categories.map((c) => (
+            <option key={c._id} value={c.slug}>
+              {c.name}
+            </option>
+          ))}
         </select>
       </div>
-      <div className="">
+      <div>
         <select
           name="sort"
-          id=""
+          defaultValue={searchParams.get("sort") ?? ""}
           className="py-2 px-4 rounded-2xl text-xs font-medium bg-white ring-1 ring-gray-400"
           onChange={handleFilterChange}
         >
-          <option>Sort By</option>
+          <option value="">Sort By</option>
           <option value="asc price">Price (low to high)</option>
           <option value="desc price">Price (high to low)</option>
-          <option value="asc lastUpdated">Newest</option>
-          <option value="desc lastUpdated">Oldest</option>
+          <option value="desc lastUpdated">Newest</option>
+          <option value="asc lastUpdated">Oldest</option>
         </select>
       </div>
     </div>
