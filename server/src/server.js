@@ -9,6 +9,7 @@ import { notFound, errorHandler } from "./middleware/error.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/products.js";
 import categoryRoutes from "./routes/categories.js";
+import cartRoutes from "./routes/cart.js";
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.get("/api/health", (req, res) => res.json({ ok: true, app: "Cartiva API" }))
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
+
+app.use("/api/cart", cartRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

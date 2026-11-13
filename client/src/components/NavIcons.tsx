@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CartModal from "./CartModal";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const NavIcons = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { count } = useCart();
 
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -49,9 +51,23 @@ const NavIcons = () => {
           </div>
         </div>
       )}
-      <Image src="/notification.png" alt="" width={22} height={22} className="cursor-pointer" />
-      <div className="relative cursor-pointer" onClick={() => setIsCartOpen((prev) => !prev)}>
+      <Image
+        src="/notification.png"
+        alt=""
+        width={22}
+        height={22}
+        className="cursor-pointer"
+      />
+      <div
+        className="relative cursor-pointer"
+        onClick={() => setIsCartOpen((prev) => !prev)}
+      >
         <Image src="/cart.png" alt="" width={22} height={22} />
+        {count > 0 && (
+          <div className="absolute -top-4 -right-4 w-6 h-6 bg-lama rounded-full text-white text-sm flex items-center justify-center">
+            {count}
+          </div>
+        )}
       </div>
       {isCartOpen && <CartModal />}
     </div>

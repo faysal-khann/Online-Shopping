@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import ProductImages from "../../components/ProductImages";
-import CustomizeProducts from "../../components/CustomizeProducts";
+import ProductPurchase from "../../components/ProductPurchase";
+
 import { finalPrice, getProduct } from "../../lib/api";
 
 const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => {
@@ -32,11 +33,7 @@ const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => 
 
         <div className="h-[2px] bg-gray-100" />
 
-        <CustomizeProducts colors={product.colors} sizes={product.sizes} />
-
-        <p className="text-sm text-gray-500">
-          {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
-        </p>
+        <ProductPurchase product={product} />
 
         <div className="h-[2px] bg-gray-100" />
         {product.additionalInfo.map((info) => (

@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+type Props = {
+  colors: string[];
+  sizes: string[];
+  color?: string;
+  size?: string;
+  onColor: (c: string) => void;
+  onSize: (s: string) => void;
+};
 
-type Props = { colors: string[]; sizes: string[] };
-
-// Color and size selection. These get sent to the cart in the next step.
-function CustomizeProducts({ colors, sizes }: Props) {
-  const [color, setColor] = useState<string | undefined>(colors[0]);
-  const [size, setSize] = useState<string | undefined>(sizes[0]);
-
+function CustomizeProducts({ colors, sizes, color, size, onColor, onSize }: Props) {
   return (
     <>
       {colors.length > 0 && (
@@ -18,7 +19,7 @@ function CustomizeProducts({ colors, sizes }: Props) {
             {colors.map((c) => (
               <li
                 key={c}
-                onClick={() => setColor(c)}
+                onClick={() => onColor(c)}
                 style={{ backgroundColor: c }}
                 className="w-8 h-8 rounded-full ring-1 ring-gray-300 relative cursor-pointer"
               >
@@ -37,7 +38,7 @@ function CustomizeProducts({ colors, sizes }: Props) {
             {sizes.map((s) => (
               <button
                 key={s}
-                onClick={() => setSize(s)}
+                onClick={() => onSize(s)}
                 className={`min-w-10 h-10 px-2 rounded-full ring-1 ring-gray-300 text-sm font-medium hover:bg-gray-100 ${
                   size === s ? "bg-lama text-white ring-lama hover:bg-lama" : ""
                 }`}
