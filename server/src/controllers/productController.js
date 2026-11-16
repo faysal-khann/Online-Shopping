@@ -2,6 +2,34 @@ import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const slugify = (s) =>
+  s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+// Only these fields can be written through the API (prevents mass assignment)
+const FIELDS = [
+  "name", "description", "price", "discountPrice", "images",
+  "category", "type", "colors", "sizes", "stock", "additionalInfo",
+];
+
+const clean = (body) => {
+  const set = {};
+  const unset = {};
+  for (const k of FIELDS) {
+    if (!(k in body)) continue;
+    if ((k === "discountPrice" || k === "category") && (body[k] === null || body[k] === ""))
+      unset[k] = 1;
+    else set[k] = body[k];
+  }
+  return { set, unset };
+};
+
+const uniqueSlug = async (name) => {
+  const base = slugify(name) || "product";
+  let slug = base;
+  let n = 1;
+  while (await Product.exists({ slug })) slug = `${base}-${++n}`;
+  return slug;
+};
 
 // GET /api/products?name=&type=&min=&max=&cat=<category slug>&sort=&page=&limit=
 export const getProducts = async (req, res) => {
@@ -51,12 +79,23 @@ export const getProductBySlug = async (req, res) => {
 
 // Admin only
 export const createProduct = async (req, res) => {
-  const product = await Product.create(req.body);
+  const { set } = clean(req.body);
+  if (!set.name?.trim()) return res.status(400).json({ message: "Name is required" });
+  if (set.discountPrice != null && +set.discountPrice >= +set.price)
+    return res.status(400).json({ message: "Discount price must be lower than price" });
+  const product = await Product.create({ ...set, slug: await uniqueSlug(set.name) });
   res.status(201).json({ product });
 };
 
+// The slug never changes on edit, so existing product links keep working
 export const updateProduct = async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+  const { set, unset } = clean(req.body);
+  if (set.discountPrice != null && set.price != null && +set.discountPrice >= +set.price)
+    return res.status(400).json({ message: "Discount price must be lower than price" });
+  const update = {};
+  if (Object.keys(set).length) update.$set = set;
+  if (Object.keys(unset).length) update.$unset = unset;
+  const product = await Product.findByIdAndUpdate(req.params.id, update, {
     new: true,
     runValidators: true,
   });

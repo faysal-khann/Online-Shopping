@@ -46,6 +46,22 @@ const NavIcons = () => {
           <Link href="/" onClick={() => setIsProfileOpen(false)}>
             Profile
           </Link>
+          <Link
+            href="/orders"
+            className="block mt-2"
+            onClick={() => setIsProfileOpen(false)}
+          >
+            My Orders
+          </Link>
+          {user.role === "admin" && (
+            <Link
+              href="/admin"
+              className="block mt-2"
+              onClick={() => setIsProfileOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
           <div className="mt-2 cursor-pointer" onClick={handleLogout}>
             {isLoading ? "Logging out" : "Logout"}
           </div>

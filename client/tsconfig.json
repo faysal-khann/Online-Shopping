@@ -18,7 +18,7 @@
       }
     ],
     "paths": {
-      "@/*": ["cartiva/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["cartiva/next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

@@ -1,0 +1,9 @@
+import { Router } from "express";
+import { createOrder, myOrders } from "../controllers/orderController.js";
+import { protect } from "../middleware/auth.js";
+
+const r = Router();
+r.use(protect);
+r.post("/", createOrder);
+r.get("/", myOrders);
+export default r;

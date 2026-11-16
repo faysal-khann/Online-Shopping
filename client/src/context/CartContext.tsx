@@ -16,8 +16,11 @@ type CartState = {
   items: CartItem[];
   count: number;
   subtotal: number;
+  
+  
   addToCart: (p: { productId: string; quantity: number; color?: string; size?: string }) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
+  checkout: () => Promise<void>;
 };
 
 const CartContext = createContext<CartState | null>(null);
@@ -54,6 +57,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     });
     setItems(d.cart.items);
   };
+    const checkout = async () => {
+    await apiFetch("/orders", { method: "POST" });
+    await load();
+  };
 
   const count = items.reduce((n, i) => n + i.quantity, 0);
   const subtotal = items.reduce(
@@ -62,7 +69,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <CartContext.Provider value={{ items, count, subtotal, addToCart, removeFromCart }}>
+    <CartContext.Provider value={{ items, count, subtotal, addToCart, removeFromCart, checkout }}>
       {children}
     </CartContext.Provider>
   );

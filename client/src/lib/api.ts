@@ -82,3 +82,8 @@ export async function getCategories(): Promise<Category[]> {
   const { categories } = await apiFetch<{ categories: Category[] }>("/categories");
   return categories;
 }
+
+export const money = (n: number) => `$${n.toFixed(2)}`;
+
+export const errorMessage = (e: unknown) =>
+  e instanceof Error ? e.message : "Something went wrong";
