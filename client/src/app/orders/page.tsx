@@ -47,6 +47,7 @@ const OrdersPage = () => {
               <div className="flex justify-between text-sm text-gray-500 mb-3">
                 <span>{new Date(o.createdAt).toLocaleString()}</span>
                 <span className="capitalize">{o.status}</span>
+                <Link href={`/orders/${o._id}`} className="underline">View details</Link>
               </div>
               {o.items.map((i, idx) => (
                 <div key={idx} className="flex justify-between text-sm py-1">

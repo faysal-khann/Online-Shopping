@@ -19,8 +19,15 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+    statusHistory: [
+      {
+        status: String,
+        at: { type: Date, default: Date.now },
+        _id: false,
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Order", orderSchema);

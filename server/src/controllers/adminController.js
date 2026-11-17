@@ -1,6 +1,8 @@
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
+import { sendMailSafe } from "../lib/mailer.js";
+import { orderStatusMail } from "../lib/emailTemplates.js";
 
 const STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"];
 
@@ -40,18 +42,25 @@ export const updateOrderStatus = async (req, res) => {
   const { status } = req.body;
   if (!STATUSES.includes(status)) return res.status(400).json({ message: "Invalid status" });
 
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).populate("user", "name email");
   if (!order) return res.status(404).json({ message: "Order not found" });
-  if (order.status === "cancelled" && status !== "cancelled")
+  if (order.status === status) return res.json({ order });
+  if (order.status === "cancelled")
     return res.status(400).json({ message: "Cancelled orders can't be reopened" });
 
   // Cancelling returns the items to stock
-  if (status === "cancelled" && order.status !== "cancelled") {
+  if (status === "cancelled") {
     for (const i of order.items) {
       if (i.product) await Product.updateOne({ _id: i.product }, { $inc: { stock: i.quantity } });
     }
   }
+
   order.status = status;
+  order.statusHistory.push({ status, at: new Date() });
   await order.save();
+
+  if (order.user?.email && status !== "pending")
+    sendMailSafe({ to: order.user.email, ...orderStatusMail(order, order.user.name) });
+
   res.json({ order });
 };

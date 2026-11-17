@@ -4,6 +4,7 @@ import "./globals.css";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import Providers from "../components/Providers";
+import VerifyBanner from "@/components/VerifyBanner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -20,11 +21,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
       <Providers>
-
-        <Navbar />
-        {children}
-        <Footer />
-      </Providers>
+  <VerifyBanner />
+  <Navbar />
+  {children}
+  <Footer />
+</Providers>
       </body>
     </html>
   );
