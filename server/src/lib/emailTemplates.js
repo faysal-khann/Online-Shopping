@@ -74,3 +74,11 @@ export const verifyOtpMail = (name, code) => ({
     <p style="font-size:32px;letter-spacing:8px;font-weight:bold;margin:20px 0">${esc(code)}</p>
     <p style="font-size:13px;color:#6b7280">It expires in 10 minutes. If you didn't sign up, ignore this email.</p>`),
 });
+
+export const emailChangeOtpMail = (name, code) => ({
+  subject: `${code} is your Cartiva email change code`,
+  text: `Hi ${name}, use ${code} to confirm your new email address. It expires in 10 minutes.`,
+  html: layout(`<p>Hi ${esc(name)},</p><p>Use this code to confirm your new email address:</p>
+    <p style="font-size:32px;letter-spacing:8px;font-weight:bold;margin:20px 0">${esc(code)}</p>
+    <p style="font-size:13px;color:#6b7280">It expires in 10 minutes. If you didn't ask for this, ignore this email.</p>`),
+});

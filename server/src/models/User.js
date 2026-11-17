@@ -28,6 +28,25 @@ const userSchema = new mongoose.Schema(
     resetTokenHash: { type: String, select: false },
     resetTokenExpires: { type: Date, select: false },
     passwordChangedAt: Date,
+        phone: { type: String, trim: true },
+    avatarUrl: { type: String, trim: true },
+    addresses: [
+      {
+        label: { type: String, enum: ["home", "work", "other"], default: "home" },
+        fullName: String,
+        phone: String,
+        line1: String,
+        city: String,
+        postalCode: String,
+        isDefault: { type: Boolean, default: false },
+      },
+    ],
+    pendingEmail: { type: String, select: false },
+    emailOtpHash: { type: String, select: false },
+    emailOtpExpires: { type: Date, select: false },
+    emailOtpAttempts: { type: Number, default: 0, select: false },
+    emailOtpSentAt: { type: Date, select: false },
+    
   },
   { timestamps: true }
 );

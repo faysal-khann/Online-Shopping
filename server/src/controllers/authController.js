@@ -17,15 +17,17 @@ const isStr = (v) => typeof v === "string" && v.length > 0;
 if (!getApps().length && process.env.FIREBASE_PROJECT_ID) {
   initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID });
 }
-const publicUser = (u) => ({
+export const publicUser = (u) => ({
   id: u._id,
   name: u.name,
   email: u.email,
   role: u.role,
   emailVerified: u.emailVerified,
+  phone: u.phone,
+  avatarUrl: u.avatarUrl,
 });
 
-const sendToken = (res, user, status = 200) => {
+export const sendToken = (res, user, status = 200) => {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
@@ -37,7 +39,6 @@ const sendToken = (res, user, status = 200) => {
   });
   res.status(status).json({ user: publicUser(user) });
 };
-
 const issueVerification = async (user) => {
   const { code, hash } = createOtp();
   user.verifyOtpHash = hash;
