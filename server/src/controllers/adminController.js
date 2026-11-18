@@ -3,7 +3,7 @@ import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import { sendMailSafe } from "../lib/mailer.js";
 import { orderStatusMail } from "../lib/emailTemplates.js";
-
+import { refund } from "../lib/gateway.js";
 const STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"];
 
 export const stats = async (req, res) => {
@@ -91,6 +91,17 @@ export const updateOrderStatus = async (req, res) => {
           { $inc: { stock: i.quantity } },
         );
     }
+  }
+    if (status === "cancelled" && order.payment?.status === "paid") {
+    const r = await refund({ amount: order.total });
+    order.payment.status = "refunded";
+    order.payment.refundedAt = new Date();
+    order.payment.refundRef = r.ref;
+  }
+  // Cash on delivery is collected when the order is delivered
+  if (status === "delivered" && order.payment?.method === "cod" && order.payment.status === "unpaid") {
+    order.payment.status = "paid";
+    order.payment.paidAt = new Date();
   }
 
   order.status = status;

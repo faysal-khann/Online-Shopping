@@ -14,9 +14,8 @@ const layout = (body) => `
   <p style="color:#9ca3af;font-size:12px;margin-top:32px">You received this email because of activity on your Cartiva account.</p>
 </div>`;
 
-const itemsTable = (order) => `
-<table style="width:100%;border-collapse:collapse;font-size:14px">
-  ${order.items
+const itemsTable = (order) => {
+  const rows = order.items
     .map(
       (i) => `<tr>
     <td style="padding:6px 0">${esc(i.name)} × ${i.quantity}${
@@ -24,10 +23,24 @@ const itemsTable = (order) => `
       }</td>
     <td style="padding:6px 0;text-align:right">${money(i.price * i.quantity)}</td></tr>`
     )
-    .join("")}
+    .join("");
+
+  const line = (label, value) =>
+    `<tr><td style="padding:3px 0;color:#6b7280">${label}</td><td style="padding:3px 0;text-align:right;color:#6b7280">${value}</td></tr>`;
+  const breakdown =
+    order.subtotal != null
+      ? `<tr><td colspan="2" style="border-top:1px solid #e5e7eb;padding-top:6px"></td></tr>
+         ${line("Subtotal", money(order.subtotal))}
+         ${line("Shipping", order.shippingFee ? money(order.shippingFee) : "Free")}
+         ${line("Tax", money(order.tax))}`
+      : "";
+
+  return `<table style="width:100%;border-collapse:collapse;font-size:14px">
+  ${rows}${breakdown}
   <tr><td style="padding-top:10px;border-top:1px solid #e5e7eb"><strong>Total</strong></td>
   <td style="padding-top:10px;border-top:1px solid #e5e7eb;text-align:right"><strong>${money(order.total)}</strong></td></tr>
 </table>`;
+};
 
 export const verifyEmailMail = (name, link) => ({
   subject: "Verify your Cartiva email",
@@ -41,15 +54,26 @@ export const resetPasswordMail = (name, link) => ({
   html: layout(`<p>Hi ${esc(name)},</p><p>We received a request to reset your password.</p>${button(link, "Reset password")}<p style="font-size:13px;color:#6b7280">This link expires in 1 hour. If you didn't ask for this, you can ignore this email.</p>`),
 });
 
+const payLabel = (p) =>
+  !p ? ""
+  : p.method === "cod" ? "Cash on delivery"
+  : p.method === "card" ? `${p.brand || "Card"} ending ${p.last4}`
+  : `${p.provider === "nagad" ? "Nagad" : "bKash"} ${p.last4 ? `(…${p.last4})` : ""}`;
+
 export const orderPlacedMail = (order, name) => {
   const link = `${clientUrl()}/orders/${order._id}`;
+  const a = order.shippingAddress;
+  const ship = a?.line1
+    ? `<p style="font-size:13px;color:#6b7280">Shipping to: ${esc(a.fullName)}, ${esc(a.line1)}, ${esc(a.city)}${
+        order.shippingMethod?.label ? ` · ${esc(order.shippingMethod.label)}` : ""
+      }<br>Payment: ${esc(payLabel(order.payment))}</p>`
+    : `<p style="font-size:13px;color:#6b7280">Payment: ${esc(payLabel(order.payment))}</p>`;
   return {
     subject: `Order confirmed #${String(order._id).slice(-8)}`,
     text: `Hi ${name}, thanks for your order (total ${money(order.total)}). Track it: ${link}`,
-    html: layout(`<p>Hi ${esc(name)},</p><p>Thanks for your order! Here's a summary:</p>${itemsTable(order)}${button(link, "View order")}`),
+    html: layout(`<p>Hi ${esc(name)},</p><p>Thanks for your order! Here's a summary:</p>${itemsTable(order)}${ship}${button(link, "View order")}`),
   };
 };
-
 const STATUS_COPY = {
   paid: ["We've received your payment", "Payment confirmed. We're getting your order ready."],
   shipped: ["Your order has shipped", "Good news, your order is on its way."],

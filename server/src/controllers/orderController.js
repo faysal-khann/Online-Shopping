@@ -2,55 +2,13 @@ import Cart from "../models/Cart.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import { sendMailSafe } from "../lib/mailer.js";
-import { orderPlacedMail, orderStatusMail } from "../lib/emailTemplates.js";
-
+import { orderStatusMail } from "../lib/emailTemplates.js";
+import { refund } from "../lib/gateway.js";
 const STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"];
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const wantsOrderEmails = (u) => u?.prefs?.orderEmails !== false;
 
-export const createOrder = async (req, res) => {
-  if (!req.user.emailVerified)
-    return res.status(403).json({ message: "Please verify your email before checking out" });
 
-  const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
-  if (!cart || cart.items.length === 0)
-    return res.status(400).json({ message: "Cart is empty" });
-
-  for (const i of cart.items) {
-    if (!i.product)
-      return res.status(400).json({ message: "A product in your cart no longer exists" });
-    if (i.quantity > i.product.stock)
-      return res.status(400).json({ message: `Not enough stock for ${i.product.name}` });
-  }
-
-  const items = cart.items.map((i) => ({
-    product: i.product._id,
-    name: i.product.name,
-    price: i.product.discountPrice ?? i.product.price,
-    quantity: i.quantity,
-    color: i.color,
-    size: i.size,
-  }));
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
-  const order = await Order.create({
-    user: req.user._id,
-    items,
-    total,
-    statusHistory: [{ status: "pending", at: new Date() }],
-  });
-
-  for (const i of cart.items) {
-    i.product.stock -= i.quantity;
-    await i.product.save();
-  }
-  cart.items = [];
-  await cart.save();
-
-  if (wantsOrderEmails(req.user))
-    sendMailSafe({ to: req.user.email, ...orderPlacedMail(order, req.user.name) });
-  res.status(201).json({ order });
-};
 
 // GET /api/orders?status=&q=&from=&to=&page=&limit=
 export const myOrders = async (req, res) => {
@@ -91,18 +49,29 @@ export const getOrder = async (req, res) => {
   res.json({ order });
 };
 
-// Customers can cancel only while the order is still pending
 export const cancelOrder = async (req, res) => {
-  const order = await Order.findOneAndUpdate(
-    { _id: req.params.id, user: req.user._id, status: "pending" },
+  // The status filter makes this atomic, so stock can't be restored twice
+  let order = await Order.findOneAndUpdate(
+    { _id: req.params.id, user: req.user._id, status: { $in: ["pending", "paid"] } },
     { $set: { status: "cancelled" }, $push: { statusHistory: { status: "cancelled", at: new Date() } } },
     { new: true }
   );
-  if (!order) return res.status(400).json({ message: "Only pending orders can be cancelled" });
+  if (!order)
+    return res.status(400).json({ message: "This order can no longer be cancelled" });
 
   for (const i of order.items) {
     if (i.product) await Product.updateOne({ _id: i.product }, { $inc: { stock: i.quantity } });
   }
+
+  if (order.payment?.status === "paid") {
+    const r = await refund({ amount: order.total });
+    order = await Order.findByIdAndUpdate(
+      order._id,
+      { $set: { "payment.status": "refunded", "payment.refundedAt": new Date(), "payment.refundRef": r.ref } },
+      { new: true }
+    );
+  }
+
   if (wantsOrderEmails(req.user))
     sendMailSafe({ to: req.user.email, ...orderStatusMail(order, req.user.name) });
   res.json({ order });

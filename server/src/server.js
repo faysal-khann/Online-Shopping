@@ -16,6 +16,7 @@ import profileRoutes from "./routes/profile.js";
 import wishlistRoutes from "./routes/wishlist.js";
 import reviewRoutes from "./routes/reviews.js";
 import returnRoutes from "./routes/returns.js";
+import checkoutRoutes from "./routes/checkout.js";
 
 const app = express();
 
@@ -35,7 +36,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/returns", returnRoutes);
-
+app.use("/api/checkout", checkoutRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
