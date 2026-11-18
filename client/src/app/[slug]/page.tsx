@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
-import ProductImages from "../../components/ProductImages";
-import ProductPurchase from "../../components/ProductPurchase";
-
-import { finalPrice, getProduct } from "../../lib/api";
+import ProductImages from "@/components/ProductImages";
+import ProductPurchase from "@/components/ProductPurchase";
+import TrackView from "@/components/TrackView";
+import WishlistButton from "@/components/WishlistButton";
+import ProductReviews from "@/components/ProductReviews";
+import { finalPrice, getProduct } from "@/lib/api";
 
 const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;
@@ -11,6 +13,13 @@ const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => 
 
   return (
     <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative flex flex-col lg:flex-row gap-16">
+      <TrackView
+        slug={product.slug}
+        name={product.name}
+        image={product.images[0]}
+        price={finalPrice(product)}
+      />
+
       {/* IMG */}
       <div className="w-full lg:w-1/2 lg:sticky top-20 h-max">
         <ProductImages images={product.images} name={product.name} />
@@ -34,6 +43,7 @@ const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => 
         <div className="h-[2px] bg-gray-100" />
 
         <ProductPurchase product={product} />
+        <WishlistButton productId={product._id} />
 
         <div className="h-[2px] bg-gray-100" />
         {product.additionalInfo.map((info) => (
@@ -42,6 +52,9 @@ const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => 
             <p>{info.text}</p>
           </div>
         ))}
+
+        <div className="h-[2px] bg-gray-100" />
+        <ProductReviews productId={product._id} />
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ export type Profile = {
   googleLinked: boolean;
   addresses: Address[];
   createdAt: string;
+  prefs?: { orderEmails: boolean; promotions: boolean };
 };
 
 export function useProfile() {

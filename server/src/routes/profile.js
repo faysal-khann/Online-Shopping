@@ -3,9 +3,13 @@ import {
   getProfile, updateProfile, changePassword, unlinkGoogle,
   requestEmailChange, confirmEmailChange,
   addAddress, updateAddress, setDefaultAddress, deleteAddress,
-  exportData, deleteAccount,overview
+  exportData, deleteAccount
 } from "../controllers/profileController.js";
 import { protect } from "../middleware/auth.js";
+
+import {
+  overview, updatePreferences, listSessions, revokeSession, revokeOtherSessions,
+} from "../controllers/dashboardController.js";
 
 const r = Router();
 r.use(protect);
@@ -25,4 +29,12 @@ r.delete("/addresses/:id", deleteAddress);
 
 r.get("/export", exportData);
 r.delete("/", deleteAccount);
+
+
+
+
+r.put("/preferences", updatePreferences);
+r.get("/sessions", listSessions);
+r.post("/sessions/revoke-others", revokeOtherSessions);
+r.delete("/sessions/:id", revokeSession);
 export default r;

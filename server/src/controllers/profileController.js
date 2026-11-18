@@ -5,21 +5,24 @@ import { createOtp, hashOtp } from "../lib/tokens.js";
 import { sendMailSafe } from "../lib/mailer.js";
 import { emailChangeOtpMail } from "../lib/emailTemplates.js";
 import { publicUser, sendToken } from "./authController.js";
+import Session from "../models/Session.js";
 
 const MIN = 60 * 1000;
 const isStr = (v) => typeof v === "string";
 const PHONE_RE = /^\+?[\d\s-]{7,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const profileOf = (u) => ({
+export const profileOf = (u) => ({
   ...publicUser(u),
   hasPassword: !!u.password,
   googleLinked: !!u.googleId,
+  prefs: u.prefs,
   addresses: u.addresses,
   createdAt: u.createdAt,
 });
 
-const loadUser = (id, extra = "") => User.findById(id).select(`+password ${extra}`);
+const loadUser = (id, extra = "") =>
+  User.findById(id).select(`+password ${extra}`);
 
 // ---------- Profile ----------
 export const getProfile = async (req, res) => {
@@ -33,8 +36,13 @@ export const updateProfile = async (req, res) => {
     return res.status(400).json({ message: "Name must be 2 to 60 characters" });
   if (phone && (!isStr(phone) || !PHONE_RE.test(phone.trim())))
     return res.status(400).json({ message: "Enter a valid phone number" });
-  if (avatarUrl && (!isStr(avatarUrl) || !/^https?:\/\/\S+$/.test(avatarUrl.trim())))
-    return res.status(400).json({ message: "Avatar must be an http(s) image URL" });
+  if (
+    avatarUrl &&
+    (!isStr(avatarUrl) || !/^https?:\/\/\S+$/.test(avatarUrl.trim()))
+  )
+    return res
+      .status(400)
+      .json({ message: "Avatar must be an http(s) image URL" });
 
   const user = await loadUser(req.user._id);
   user.name = name.trim();
@@ -48,27 +56,35 @@ export const updateProfile = async (req, res) => {
 export const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!isStr(newPassword) || newPassword.length < 6)
-    return res.status(400).json({ message: "New password must be at least 6 characters" });
+    return res
+      .status(400)
+      .json({ message: "New password must be at least 6 characters" });
 
   const user = await loadUser(req.user._id);
   if (user.password) {
     if (!isStr(currentPassword) || !(await user.matchPassword(currentPassword)))
       return res.status(400).json({ message: "Current password is incorrect" });
     if (currentPassword === newPassword)
-      return res.status(400).json({ message: "New password must be different" });
+      return res
+        .status(400)
+        .json({ message: "New password must be different" });
   }
   // Google-only accounts have no password yet, so they can set a first one here
   user.password = newPassword;
   await user.save(); // also sets passwordChangedAt, which signs out every other device
-  sendToken(res, user); // re-issues the cookie so THIS device stays signed in
+  await Session.deleteMany({ user: user._id });
+  await sendToken(req, res, user); // re-issues the cookie so THIS device stays signed in
 };
 
 // ---------- Connected accounts ----------
 export const unlinkGoogle = async (req, res) => {
   const user = await loadUser(req.user._id);
-  if (!user.googleId) return res.status(400).json({ message: "Google is not connected" });
+  if (!user.googleId)
+    return res.status(400).json({ message: "Google is not connected" });
   if (!user.password)
-    return res.status(400).json({ message: "Set a password first, or you'd be locked out" });
+    return res
+      .status(400)
+      .json({ message: "Set a password first, or you'd be locked out" });
   user.googleId = undefined;
   await user.save();
   res.json({ profile: profileOf(user) });
@@ -82,14 +98,19 @@ export const requestEmailChange = async (req, res) => {
   const next = email.toLowerCase().trim();
 
   const user = await loadUser(req.user._id, "+emailOtpSentAt");
-  if (user.password && (!isStr(password) || !(await user.matchPassword(password))))
+  if (
+    user.password &&
+    (!isStr(password) || !(await user.matchPassword(password)))
+  )
     return res.status(400).json({ message: "Password is incorrect" });
   if (next === user.email)
     return res.status(400).json({ message: "That is already your email" });
   if (await User.exists({ email: next }))
     return res.status(409).json({ message: "That email is already in use" });
   if (user.emailOtpSentAt && Date.now() - user.emailOtpSentAt.getTime() < MIN)
-    return res.status(429).json({ message: "Please wait a minute before requesting another code" });
+    return res
+      .status(429)
+      .json({ message: "Please wait a minute before requesting another code" });
 
   const { code, hash } = createOtp();
   user.pendingEmail = next;
@@ -110,12 +131,21 @@ export const confirmEmailChange = async (req, res) => {
 
   const user = await loadUser(
     req.user._id,
-    "+pendingEmail +emailOtpHash +emailOtpExpires +emailOtpAttempts"
+    "+pendingEmail +emailOtpHash +emailOtpExpires +emailOtpAttempts",
   );
-  if (!user.pendingEmail || !user.emailOtpHash || !user.emailOtpExpires || user.emailOtpExpires < new Date())
-    return res.status(400).json({ message: "This code has expired. Request a new one." });
+  if (
+    !user.pendingEmail ||
+    !user.emailOtpHash ||
+    !user.emailOtpExpires ||
+    user.emailOtpExpires < new Date()
+  )
+    return res
+      .status(400)
+      .json({ message: "This code has expired. Request a new one." });
   if (user.emailOtpAttempts >= 5)
-    return res.status(429).json({ message: "Too many attempts. Request a new code." });
+    return res
+      .status(429)
+      .json({ message: "Too many attempts. Request a new code." });
 
   if (hashOtp(code) !== user.emailOtpHash) {
     user.emailOtpAttempts += 1;
@@ -162,9 +192,12 @@ export const addAddress = async (req, res) => {
 
   const user = await loadUser(req.user._id);
   if (user.addresses.length >= MAX_ADDRESSES)
-    return res.status(400).json({ message: `You can save up to ${MAX_ADDRESSES} addresses` });
+    return res
+      .status(400)
+      .json({ message: `You can save up to ${MAX_ADDRESSES} addresses` });
 
-  const makeDefault = req.body.isDefault === true || user.addresses.length === 0;
+  const makeDefault =
+    req.body.isDefault === true || user.addresses.length === 0;
   if (makeDefault) user.addresses.forEach((a) => (a.isDefault = false));
   user.addresses.push({ ...data, isDefault: makeDefault });
   await user.save();
@@ -179,7 +212,8 @@ export const updateAddress = async (req, res) => {
   const addr = user.addresses.id(req.params.id);
   if (!addr) return res.status(404).json({ message: "Address not found" });
   Object.assign(addr, data);
-  if (req.body.isDefault === true) user.addresses.forEach((a) => (a.isDefault = a._id.equals(addr._id)));
+  if (req.body.isDefault === true)
+    user.addresses.forEach((a) => (a.isDefault = a._id.equals(addr._id)));
   await user.save();
   res.json({ profile: profileOf(user) });
 };
@@ -207,7 +241,9 @@ export const deleteAddress = async (req, res) => {
 // ---------- Download my data ----------
 export const exportData = async (req, res) => {
   const user = await loadUser(req.user._id);
-  const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 }).lean();
+  const orders = await Order.find({ user: user._id })
+    .sort({ createdAt: -1 })
+    .lean();
   const data = {
     exportedAt: new Date().toISOString(),
     profile: {
@@ -223,7 +259,10 @@ export const exportData = async (req, res) => {
     orders,
   };
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", 'attachment; filename="cartiva-my-data.json"');
+  res.setHeader(
+    "Content-Disposition",
+    'attachment; filename="cartiva-my-data.json"',
+  );
   res.send(JSON.stringify(data, null, 2));
 };
 
@@ -233,21 +272,35 @@ export const deleteAccount = async (req, res) => {
   const user = await loadUser(req.user._id);
 
   if (user.role === "admin")
-    return res.status(403).json({ message: "Admin accounts can't be deleted here" });
+    return res
+      .status(403)
+      .json({ message: "Admin accounts can't be deleted here" });
 
   if (user.password) {
     if (!isStr(password) || !(await user.matchPassword(password)))
       return res.status(400).json({ message: "Password is incorrect" });
-  } else if (!isStr(confirmEmail) || confirmEmail.toLowerCase().trim() !== user.email) {
-    return res.status(400).json({ message: "Type your email address to confirm" });
+  } else if (
+    !isStr(confirmEmail) ||
+    confirmEmail.toLowerCase().trim() !== user.email
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Type your email address to confirm" });
   }
 
-  if (await Order.exists({ user: user._id, status: { $in: ["pending", "paid", "shipped"] } }))
-    return res
-      .status(409)
-      .json({ message: "You have orders in progress. Wait until they are delivered or cancelled." });
+  if (
+    await Order.exists({
+      user: user._id,
+      status: { $in: ["pending", "paid", "shipped"] },
+    })
+  )
+    return res.status(409).json({
+      message:
+        "You have orders in progress. Wait until they are delivered or cancelled.",
+    });
 
   // Past orders are kept for the store's records, but no longer linked to a person
+  await Session.deleteMany({ user: user._id });
   await Cart.deleteOne({ user: user._id });
   await User.deleteOne({ _id: user._id });
   res.clearCookie("token");
@@ -257,13 +310,15 @@ export const deleteAccount = async (req, res) => {
 // ---------- Dashboard overview ----------
 export const overview = async (req, res) => {
   const user = await loadUser(req.user._id);
-  const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 }).lean();
+  const orders = await Order.find({ user: user._id })
+    .sort({ createdAt: -1 })
+    .lean();
 
   const totalSpent = orders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + o.total, 0);
   const activeOrders = orders.filter((o) =>
-    ["pending", "paid", "shipped"].includes(o.status)
+    ["pending", "paid", "shipped"].includes(o.status),
   ).length;
 
   res.json({

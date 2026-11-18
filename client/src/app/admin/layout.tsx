@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/returns", label: "Returns" },
 ];
 
 const wrap = "px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64";

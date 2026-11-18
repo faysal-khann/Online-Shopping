@@ -4,7 +4,13 @@ import bcrypt from "bcryptjs";
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     // Not required for Google accounts
     password: {
       type: String,
@@ -28,11 +34,20 @@ const userSchema = new mongoose.Schema(
     resetTokenHash: { type: String, select: false },
     resetTokenExpires: { type: Date, select: false },
     passwordChangedAt: Date,
-        phone: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
+    prefs: {
+      orderEmails: { type: Boolean, default: true },
+      promotions: { type: Boolean, default: false },
+    },
     avatarUrl: { type: String, trim: true },
     addresses: [
       {
-        label: { type: String, enum: ["home", "work", "other"], default: "home" },
+        label: {
+          type: String,
+          enum: ["home", "work", "other"],
+          default: "home",
+        },
         fullName: String,
         phone: String,
         line1: String,
@@ -46,9 +61,8 @@ const userSchema = new mongoose.Schema(
     emailOtpExpires: { type: Date, select: false },
     emailOtpAttempts: { type: Number, default: 0, select: false },
     emailOtpSentAt: { type: Date, select: false },
-    
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function () {

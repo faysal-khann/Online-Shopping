@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import { createToken, hashToken } from "../lib/tokens.js";
 import { sendMailSafe } from "../lib/mailer.js";
 import { verifyEmailMail, resetPasswordMail } from "../lib/emailTemplates.js";
+import Session from "../models/Session.js";
 
 import { createOtp, hashOtp } from "../lib/tokens.js";
 import { verifyOtpMail } from "../lib/emailTemplates.js";
@@ -27,10 +28,19 @@ export const publicUser = (u) => ({
   avatarUrl: u.avatarUrl,
 });
 
-export const sendToken = (res, user, status = 200) => {
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
+export const sendToken = async (req, res, user, status = 200) => {
+  const session = await Session.create({
+    user: user._id,
+    userAgent: req.get("user-agent") || "",
+    ip: req.ip,
   });
+  const token = jwt.sign(
+    { id: user._id, sid: session._id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
   res.cookie("token", token, {
     httpOnly: true,
     sameSite: "lax",
@@ -58,7 +68,7 @@ export const register = async (req, res) => {
     return res.status(409).json({ message: "Email already registered" });
   const user = await User.create({ name, email, password });
   await issueVerification(user);
-  sendToken(res, user, 201);
+  await sendToken(req, res, user, 201);
 };
 
 export const login = async (req, res) => {
@@ -75,10 +85,16 @@ export const login = async (req, res) => {
     });
   if (!user || !(await user.matchPassword(password)))
     return res.status(401).json({ message: "Invalid email or password" });
-  sendToken(res, user);
+  await sendToken(req, res, user);
 };
 
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
+  try {
+    const { sid } = jwt.verify(req.cookies?.token, process.env.JWT_SECRET);
+    if (sid) await Session.deleteOne({ _id: sid });
+  } catch {
+    /* no valid cookie, nothing to end */
+  }
   res.clearCookie("token");
   res.json({ message: "Logged out" });
 };
@@ -95,10 +111,18 @@ export const verifyEmail = async (req, res) => {
     "+verifyOtpHash +verifyOtpExpires +verifyOtpAttempts",
   );
   if (user.emailVerified) return res.json({ user: publicUser(user) });
-  if (!user.verifyOtpHash || !user.verifyOtpExpires || user.verifyOtpExpires < new Date())
-    return res.status(400).json({ message: "This code has expired. Request a new one." });
+  if (
+    !user.verifyOtpHash ||
+    !user.verifyOtpExpires ||
+    user.verifyOtpExpires < new Date()
+  )
+    return res
+      .status(400)
+      .json({ message: "This code has expired. Request a new one." });
   if (user.verifyOtpAttempts >= 5)
-    return res.status(429).json({ message: "Too many attempts. Request a new code." });
+    return res
+      .status(429)
+      .json({ message: "Too many attempts. Request a new code." });
 
   if (hashOtp(code) !== user.verifyOtpHash) {
     user.verifyOtpAttempts += 1;
@@ -119,7 +143,9 @@ export const resendVerification = async (req, res) => {
   if (user.emailVerified)
     return res.status(400).json({ message: "Your email is already verified" });
   if (user.verifyOtpSentAt && Date.now() - user.verifyOtpSentAt.getTime() < MIN)
-    return res.status(429).json({ message: "Please wait a minute before requesting another code" });
+    return res
+      .status(429)
+      .json({ message: "Please wait a minute before requesting another code" });
   await issueVerification(user);
   res.json({ message: "A new code has been sent" });
 };
@@ -181,7 +207,8 @@ export const resetPassword = async (req, res) => {
   user.resetTokenExpires = undefined;
   user.emailVerified = true; // they just proved they own the inbox
   await user.save();
-  sendToken(res, user);
+  await Session.deleteMany({ user: user._id });
+  await sendToken(req, res, user);
 };
 
 // ---------- Google sign-in (verified through Firebase) ----------
@@ -231,5 +258,5 @@ export const googleLogin = async (req, res) => {
       });
     }
   }
-  sendToken(res, user);
+  await sendToken(req, res, user);
 };
