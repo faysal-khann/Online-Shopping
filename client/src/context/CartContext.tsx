@@ -21,6 +21,7 @@ type CartState = {
   addToCart: (p: { productId: string; quantity: number; color?: string; size?: string }) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   checkout: () => Promise<void>;
+  reload: () => Promise<void>;
 };
 
 const CartContext = createContext<CartState | null>(null);
@@ -69,7 +70,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <CartContext.Provider value={{ items, count, subtotal, addToCart, removeFromCart, checkout }}>
+    <CartContext.Provider value={{ items, count, subtotal, addToCart, removeFromCart, checkout, reload: load }}>
       {children}
     </CartContext.Provider>
   );

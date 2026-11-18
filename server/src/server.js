@@ -12,6 +12,10 @@ import categoryRoutes from "./routes/categories.js";
 import cartRoutes from "./routes/cart.js";
 import orderRoutes from "./routes/orders.js";
 import adminRoutes from "./routes/admin.js";
+import profileRoutes from "./routes/profile.js";
+import wishlistRoutes from "./routes/wishlist.js";
+import reviewRoutes from "./routes/reviews.js";
+import returnRoutes from "./routes/returns.js";
 
 const app = express();
 
@@ -27,6 +31,10 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/returns", returnRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
