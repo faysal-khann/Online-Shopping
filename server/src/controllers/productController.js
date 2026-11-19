@@ -33,11 +33,14 @@ const uniqueSlug = async (name) => {
 
 // GET /api/products?name=&type=&min=&max=&cat=<category slug>&sort=&page=&limit=
 export const getProducts = async (req, res) => {
-  const { name, type, min, max, cat, sort, page = 1, limit = 8 } = req.query;
+  const { name, type, min, max, cat, sort, deals, page = 1, limit = 8 } = req.query;
   const q = {};
 
   if (name) q.name = new RegExp(escapeRegex(String(name)), "i");
   if (type === "physical" || type === "digital") q.type = type;
+  if (deals === "1") {
+  q.discountPrice = { $exists: true, $ne: null };
+}
   if (min || max) {
     q.price = {};
     if (min && !isNaN(+min)) q.price.$gte = +min;
