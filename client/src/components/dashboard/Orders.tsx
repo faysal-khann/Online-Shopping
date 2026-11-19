@@ -214,7 +214,7 @@ const Orders = () => {
                 <button className={btnGhost} disabled={busyId === o._id} onClick={() => reorder(o)}>
                   <RotateCcw size={16} /> Buy again
                 </button>
-                {o.status === "pending" && (
+                {["pending", "paid"].includes(o.status) && (
                   <button className={`${btnGhost} !text-red-600 !ring-red-200`} onClick={() => setCancelling(o)}>
                     <XCircle size={16} /> Cancel order
                   </button>
@@ -238,7 +238,7 @@ const Orders = () => {
       {/* MODALS */}
       <Modal open={!!cancelling} title="Cancel this order?" onClose={() => setCancelling(null)}>
         <p className="text-sm text-gray-600 mb-5">
-          Order #{cancelling?._id.slice(-8)} will be cancelled and the items returned to stock. This can&apos;t be undone.
+          Order #{cancelling?._id.slice(-8)} will be cancelled and the items returned to stock. If you already paid, the amount is refunded. This can&apos;t be undone.
         </p>
         <div className="flex justify-end gap-3">
           <button className={btnGhost} onClick={() => setCancelling(null)}>Keep order</button>

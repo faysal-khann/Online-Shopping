@@ -35,7 +35,7 @@ const NavIcons = () => {
           </div>
         )}
       </div>
-      {isCartOpen && <CartModal />}
+      {isCartOpen && <CartModal onClose={() => setIsCartOpen(false)} />}
     </div>
   );
 };

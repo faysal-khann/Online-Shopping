@@ -33,7 +33,9 @@ const ListPage = async ({
       </Suspense>
 
       {/* PRODUCTS */}
-      <h1 className="mt-12 text-xl font-semibold">For You!</h1>
+      <h1 className="mt-12 text-xl font-semibold">
+        {sp.deals === "1" ? "Deals: discounted products" : "For You!"}
+      </h1>
       <ProductList searchParams={sp} paginate />
     </div>
   );

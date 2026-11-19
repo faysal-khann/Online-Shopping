@@ -12,7 +12,26 @@ type Order = {
   status: string;
   createdAt: string;
   statusHistory?: { status: string; at: string }[];
-  items: { name: string; price: number; quantity: number; color?: string; size?: string }[];
+  items: {
+    name: string;
+    price: number;
+    quantity: number;
+    color?: string;
+    size?: string;
+  }[];
+  payment?: {
+    method: string;
+    status: string;
+    brand?: string;
+    last4?: string;
+    provider?: string;
+  };
+  shippingAddress?: {
+    fullName: string;
+    line1: string;
+    city: string;
+    phone: string;
+  };
 };
 
 const FLOW = [
@@ -41,17 +60,28 @@ const OrderDetailPage = () => {
   if (!user)
     return (
       <div className={wrap}>
-        Please <Link href="/login" className="underline">log in</Link> to see this order.
+        Please{" "}
+        <Link href="/login" className="underline">
+          log in
+        </Link>{" "}
+        to see this order.
       </div>
     );
   if (error)
     return (
       <div className={wrap}>
         <p className="text-red-600">{error}</p>
-        <Link href="/orders" className="underline text-sm">Back to orders</Link>
+        <Link href="/orders" className="underline text-sm">
+          Back to orders
+        </Link>
       </div>
     );
-  if (!order) return <div className={wrap}><p className="text-gray-500">Loading...</p></div>;
+  if (!order)
+    return (
+      <div className={wrap}>
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
 
   // Orders created before history existed fall back to one entry
   const history = order.statusHistory?.length
@@ -69,14 +99,26 @@ const OrderDetailPage = () => {
   }));
   if (cancelled) {
     steps = steps.filter((s) => s.done);
-    steps.push({ key: "cancelled", label: "Cancelled", when: at("cancelled"), done: true, bad: true });
+    steps.push({
+      key: "cancelled",
+      label: "Cancelled",
+      when: at("cancelled"),
+      done: true,
+      bad: true,
+    });
   }
 
   return (
     <div className={wrap}>
-      <Link href="/orders" className="text-sm underline">← All orders</Link>
-      <h1 className="text-2xl font-semibold mt-4">Order #{order._id.slice(-8)}</h1>
-      <p className="text-sm text-gray-500">Placed {new Date(order.createdAt).toLocaleString()}</p>
+      <Link href="/orders" className="text-sm underline">
+        ← All orders
+      </Link>
+      <h1 className="text-2xl font-semibold mt-4">
+        Order #{order._id.slice(-8)}
+      </h1>
+      <p className="text-sm text-gray-500">
+        Placed {new Date(order.createdAt).toLocaleString()}
+      </p>
 
       <div className="grid lg:grid-cols-2 gap-12 mt-8">
         <div>
@@ -86,14 +128,24 @@ const OrderDetailPage = () => {
               <li key={s.key} className="relative ml-6 mb-8 last:mb-0">
                 <span
                   className={`absolute -left-[35px] w-6 h-6 rounded-full flex items-center justify-center text-xs text-white ${
-                    s.done ? (s.bad ? "bg-red-500" : "bg-green-500") : "bg-gray-300"
+                    s.done
+                      ? s.bad
+                        ? "bg-red-500"
+                        : "bg-green-500"
+                      : "bg-gray-300"
                   }`}
                 >
                   {s.done ? (s.bad ? "✕" : "✓") : ""}
                 </span>
-                <div className={`font-medium ${s.done ? "" : "text-gray-400"}`}>{s.label}</div>
+                <div className={`font-medium ${s.done ? "" : "text-gray-400"}`}>
+                  {s.label}
+                </div>
                 <div className="text-xs text-gray-500">
-                  {s.when ? new Date(s.when).toLocaleString() : s.done ? "" : "Waiting"}
+                  {s.when
+                    ? new Date(s.when).toLocaleString()
+                    : s.done
+                      ? ""
+                      : "Waiting"}
                 </div>
               </li>
             ))}
@@ -106,7 +158,7 @@ const OrderDetailPage = () => {
             {order.items.map((i, idx) => (
               <div key={idx} className="flex justify-between text-sm py-1">
                 <span>
-                  {i.name} × {i.quantity}
+                  {i.name} x {i.quantity}
                   {[i.color, i.size].filter(Boolean).length > 0 &&
                     ` (${[i.color, i.size].filter(Boolean).join(" / ")})`}
                 </span>
@@ -120,6 +172,34 @@ const OrderDetailPage = () => {
           </div>
         </div>
       </div>
+      {(order.payment || order.shippingAddress) && (
+        <div className="ring-1 ring-gray-200 rounded-md p-4 mt-6 text-sm flex flex-col gap-3">
+          {order.payment && (
+            <div>
+              <div className="text-xs text-gray-500">Payment</div>
+              <div className="capitalize">
+                {order.payment.method === "card"
+                  ? `${order.payment.brand ?? "Card"} ending ${order.payment.last4}`
+                  : order.payment.method === "mobile"
+                    ? `${order.payment.provider} ···${order.payment.last4}`
+                    : "Cash on delivery"}{" "}
+                · {order.payment.status}
+              </div>
+            </div>
+          )}
+
+          {order.shippingAddress && (
+            <div>
+              <div className="text-xs text-gray-500">Shipping address</div>
+              <div>
+                {order.shippingAddress.fullName}, {order.shippingAddress.line1},{" "}
+                {order.shippingAddress.city}
+              </div>
+              <div className="text-gray-500">{order.shippingAddress.phone}</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

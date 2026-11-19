@@ -58,7 +58,7 @@ export async function getProducts(
   limit = 8
 ): Promise<ProductsResponse> {
   const qs = new URLSearchParams();
-  for (const key of ["name", "type", "min", "max", "cat", "sort", "page"]) {
+  for (const key of ["name", "type", "min", "max", "cat", "sort", "deals", "page"]) {
     const v = params[key];
     if (typeof v === "string" && v) qs.set(key, v);
   }
