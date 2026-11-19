@@ -7,7 +7,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  role: "user" | "admin";
+    role: "user" | "staff" | "viewer" | "admin";
   emailVerified: boolean;
   phone?: string;
   avatarUrl?: string;

@@ -60,7 +60,7 @@ const Menu = () => {
                   <Link href="/profile#orders" onClick={close} className="hover:text-lama">
                     My orders
                   </Link>
-                  {user.role === "admin" && (
+                  {user.role !== "user"&& (
                     <Link href="/admin" onClick={close} className="hover:text-lama">
                       Admin
                     </Link>

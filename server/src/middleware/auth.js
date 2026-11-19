@@ -15,6 +15,7 @@ export const protect = async (req, res, next) => {
 
     const user = await User.findById(id);
     if (!user) return res.status(401).json({ message: "User no longer exists" });
+    if (user.blocked) return res.status(403).json({ message: "This account has been suspended" });
     if (user.passwordChangedAt && Math.floor(user.passwordChangedAt.getTime() / 1000) > iat)
       return res.status(401).json({ message: "Password changed. Please log in again." });
 
@@ -29,7 +30,17 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const adminOnly = (req, res, next) => {
-  if (req.user?.role !== "admin") return res.status(403).json({ message: "Admins only" });
-  next();
-};
+// admin, staff and viewer can read the admin area
+export const staffOnly = (req, res, next) =>
+  ["admin", "staff", "viewer"].includes(req.user?.role)
+    ? next()
+    : res.status(403).json({ message: "Staff only" });
+
+// admin and staff can change things; viewers are read-only
+export const canWrite = (req, res, next) =>
+  ["admin", "staff"].includes(req.user?.role)
+    ? next()
+    : res.status(403).json({ message: "Your role is read-only" });
+
+export const adminOnly = (req, res, next) =>
+  req.user?.role === "admin" ? next() : res.status(403).json({ message: "Admins only" });

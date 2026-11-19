@@ -85,6 +85,8 @@ export const login = async (req, res) => {
     });
   if (!user || !(await user.matchPassword(password)))
     return res.status(401).json({ message: "Invalid email or password" });
+  if (user.blocked)
+    return res.status(403).json({ message: "This account has been suspended" });
   await sendToken(req, res, user);
 };
 
@@ -258,5 +260,8 @@ export const googleLogin = async (req, res) => {
       });
     }
   }
+
+  if (user.blocked)
+    return res.status(403).json({ message: "This account has been suspended" });
   await sendToken(req, res, user);
 };

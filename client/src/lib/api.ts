@@ -87,3 +87,16 @@ export const money = (n: number) => `$${n.toFixed(2)}`;
 
 export const errorMessage = (e: unknown) =>
   e instanceof Error ? e.message : "Something went wrong";
+
+export type Banner = {
+  _id: string; title: string; subtitle: string; image: string; link: string; buttonText: string;
+};
+
+export async function getBanners(): Promise<Banner[]> {
+  try {
+    const { banners } = await apiFetch<{ banners: Banner[] }>("/banners");
+    return banners;
+  } catch {
+    return [];
+  }
+}

@@ -3,12 +3,11 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import { sendMailSafe } from "../lib/mailer.js";
 import { orderStatusMail } from "../lib/emailTemplates.js";
+import { restoreStock } from "../lib/inventory.js";
 import { refund } from "../lib/gateway.js";
 const STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"];
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const wantsOrderEmails = (u) => u?.prefs?.orderEmails !== false;
-
-
 
 // GET /api/orders?status=&q=&from=&to=&page=&limit=
 export const myOrders = async (req, res) => {
@@ -30,17 +29,34 @@ export const myOrders = async (req, res) => {
     const term = escapeRegex(q.trim().replace(/^#/, ""));
     filter.$or = [
       { "items.name": new RegExp(term, "i") },
-      { $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: `${term}$`, options: "i" } } },
+      {
+        $expr: {
+          $regexMatch: {
+            input: { $toString: "$_id" },
+            regex: `${term}$`,
+            options: "i",
+          },
+        },
+      },
     ];
   }
 
   const pageNum = Math.max(+page || 1, 1);
   const limitNum = Math.min(Math.max(+limit || 10, 1), 50);
   const [orders, total] = await Promise.all([
-    Order.find(filter).sort({ createdAt: -1 }).skip((pageNum - 1) * limitNum).limit(limitNum).lean(),
+    Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
+      .lean(),
     Order.countDocuments(filter),
   ]);
-  res.json({ orders, total, page: pageNum, pages: Math.ceil(total / limitNum) });
+  res.json({
+    orders,
+    total,
+    page: pageNum,
+    pages: Math.ceil(total / limitNum),
+  });
 };
 
 export const getOrder = async (req, res) => {
@@ -52,28 +68,47 @@ export const getOrder = async (req, res) => {
 export const cancelOrder = async (req, res) => {
   // The status filter makes this atomic, so stock can't be restored twice
   let order = await Order.findOneAndUpdate(
-    { _id: req.params.id, user: req.user._id, status: { $in: ["pending", "paid"] } },
-    { $set: { status: "cancelled" }, $push: { statusHistory: { status: "cancelled", at: new Date() } } },
-    { new: true }
+    {
+      _id: req.params.id,
+      user: req.user._id,
+      status: { $in: ["pending", "paid"] },
+    },
+    {
+      $set: { status: "cancelled" },
+      $push: { statusHistory: { status: "cancelled", at: new Date() } },
+    },
+    { new: true },
   );
   if (!order)
-    return res.status(400).json({ message: "This order can no longer be cancelled" });
+    return res
+      .status(400)
+      .json({ message: "This order can no longer be cancelled" });
 
-  for (const i of order.items) {
-    if (i.product) await Product.updateOne({ _id: i.product }, { $inc: { stock: i.quantity } });
-  }
+  await restoreStock(order, {
+    user: req.user,
+    reason: `Order #${String(order._id).slice(-8)} cancelled by customer`,
+  });
 
   if (order.payment?.status === "paid") {
     const r = await refund({ amount: order.total });
     order = await Order.findByIdAndUpdate(
       order._id,
-      { $set: { "payment.status": "refunded", "payment.refundedAt": new Date(), "payment.refundRef": r.ref } },
-      { new: true }
+      {
+        $set: {
+          "payment.status": "refunded",
+          "payment.refundedAt": new Date(),
+          "payment.refundRef": r.ref,
+        },
+      },
+      { new: true },
     );
   }
 
   if (wantsOrderEmails(req.user))
-    sendMailSafe({ to: req.user.email, ...orderStatusMail(order, req.user.name) });
+    sendMailSafe({
+      to: req.user.email,
+      ...orderStatusMail(order, req.user.name),
+    });
   res.json({ order });
 };
 
@@ -90,14 +125,29 @@ export const reorder = async (req, res) => {
   let skipped = 0;
   for (const i of order.items) {
     const product = i.product ? await Product.findById(i.product) : null;
-    if (!product) { skipped++; continue; }
+    if (!product) {
+      skipped++;
+      continue;
+    }
     const existing = cart.items.find(
-      (c) => c.product.equals(product._id) && c.color === i.color && c.size === i.size
+      (c) =>
+        c.product.equals(product._id) &&
+        c.color === i.color &&
+        c.size === i.size,
     );
     const qty = Math.min(i.quantity, product.stock - (existing?.quantity || 0));
-    if (qty < 1) { skipped++; continue; }
+    if (qty < 1) {
+      skipped++;
+      continue;
+    }
     if (existing) existing.quantity += qty;
-    else cart.items.push({ product: product._id, quantity: qty, color: i.color, size: i.size });
+    else
+      cart.items.push({
+        product: product._id,
+        quantity: qty,
+        color: i.color,
+        size: i.size,
+      });
     added++;
   }
   await cart.save();
