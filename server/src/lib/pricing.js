@@ -18,24 +18,28 @@ export const listMethods = (subtotal) =>
   });
 
 // items: [{ price, quantity }]
-export function priceCart(items, methodKey, shippable = true) {
+// items: [{ price, quantity }]. Discount comes off before shipping threshold and tax.
+export function priceCart(items, methodKey, shippable = true, discount = 0) {
   const subtotal = round(items.reduce((s, i) => s + i.price * i.quantity, 0));
+  const off = Math.min(round(discount), subtotal);
+  const taxable = round(subtotal - off);
+
   let shippingFee = 0;
   let method = { key: "digital", label: "Digital delivery", eta: "Instant" };
-
   if (shippable) {
     if (!hasMethod(methodKey)) return null;
     const m = SHIPPING_METHODS[methodKey];
     method = { key: m.key, label: m.label, eta: m.eta };
-    shippingFee = feeFor(m, subtotal);
+    shippingFee = feeFor(m, taxable);
   }
-  const tax = round(subtotal * TAX_RATE);
+  const tax = round(taxable * TAX_RATE);
   return {
     subtotal,
+    discount: off,
     shippingFee,
     tax,
     taxRate: TAX_RATE,
-    total: round(subtotal + shippingFee + tax),
+    total: round(taxable + shippingFee + tax),
     method,
   };
 }

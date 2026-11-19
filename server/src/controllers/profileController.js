@@ -271,7 +271,7 @@ export const deleteAccount = async (req, res) => {
   const { password, confirmEmail } = req.body;
   const user = await loadUser(req.user._id);
 
-  if (user.role === "admin")
+    if (user.role !== "user")
     return res
       .status(403)
       .json({ message: "Admin accounts can't be deleted here" });

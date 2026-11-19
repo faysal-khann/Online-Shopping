@@ -16,6 +16,8 @@ const orderSchema = new mongoose.Schema(
     subtotal: Number,
     shippingFee: Number,
     tax: Number,
+    discount: Number,
+    couponCode: String,
     total: { type: Number, required: true },
     shippingMethod: { key: String, label: String, eta: String },
     shippingAddress: {
@@ -27,7 +29,11 @@ const orderSchema = new mongoose.Schema(
     },
     payment: {
       method: { type: String, enum: ["card", "mobile", "cod"], default: "cod" },
-      status: { type: String, enum: ["unpaid", "paid", "refunded", "failed"], default: "unpaid" },
+      status: {
+        type: String,
+        enum: ["unpaid", "paid", "refunded", "failed"],
+        default: "unpaid",
+      },
       brand: String,
       last4: String,
       provider: String,
@@ -50,7 +56,7 @@ const orderSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Order", orderSchema);

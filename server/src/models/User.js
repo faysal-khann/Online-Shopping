@@ -20,7 +20,12 @@ const userSchema = new mongoose.Schema(
         return !this.googleId;
       },
     },
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    role: {
+      type: String,
+      enum: ["user", "staff", "viewer", "admin"],
+      default: "user",
+    },
+    blocked: { type: Boolean, default: false },
     googleId: { type: String, unique: true, sparse: true },
     emailVerified: { type: Boolean, default: false },
     verifyTokenHash: { type: String, select: false },

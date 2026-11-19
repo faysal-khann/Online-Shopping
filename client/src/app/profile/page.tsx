@@ -112,7 +112,7 @@ const ProfileDashboard = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/list" className={btnGhost}>Continue shopping</Link>
-          {user.role === "admin" && <Link href="/admin" className={btnGhost}>Admin</Link>}
+          {user.role !== "user" && <Link href="/admin" className={btnGhost}>Admin</Link>}
           <button onClick={handleLogout} className={`${btnGhost} !text-red-600 !ring-red-200`}>
             <LogOut size={16} /> Logout
           </button>

@@ -35,6 +35,7 @@ const nextConfig = {
         hostname: "cdn.dummyjson.com",
       },
       { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "http", hostname: "localhost", port: "5000" },
     ],
   },
 };

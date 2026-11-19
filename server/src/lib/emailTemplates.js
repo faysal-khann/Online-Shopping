@@ -31,6 +31,7 @@ const itemsTable = (order) => {
     order.subtotal != null
       ? `<tr><td colspan="2" style="border-top:1px solid #e5e7eb;padding-top:6px"></td></tr>
          ${line("Subtotal", money(order.subtotal))}
+         ${order.discount ? line("Discount", "-" + money(order.discount)) : ""}
          ${line("Shipping", order.shippingFee ? money(order.shippingFee) : "Free")}
          ${line("Tax", money(order.tax))}`
       : "";
