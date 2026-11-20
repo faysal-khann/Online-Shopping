@@ -1,5 +1,7 @@
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  typeof window === "undefined"
+    ? `${process.env.API_INTERNAL_URL || "http://localhost:5000"}/api`
+    : "/api";
 
 export class ApiError extends Error {
   status: number;
