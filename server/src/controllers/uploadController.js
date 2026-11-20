@@ -1,9 +1,12 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import crypto from "node:crypto";
 import multer from "multer";
-import { UPLOAD_DIR } from "../lib/paths.js";
+import { v2 as cloudinary } from "cloudinary";
 import { audit } from "../lib/audit.js";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const upload = multer({
   storage: multer.memoryStorage(),
@@ -20,21 +23,29 @@ const sniff = (b) => {
   return null;
 };
 
+const toCloudinary = (buffer) =>
+  new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ folder: "cartiva", resource_type: "image" }, (err, result) =>
+        err ? reject(err) : resolve(result)
+      )
+      .end(buffer);
+  });
+
 export const uploadImages = async (req, res) => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_SECRET)
+    return res.status(501).json({ message: "Image uploads are not configured" });
+
   const files = req.files || [];
   if (!files.length) return res.status(400).json({ message: "Choose at least one image" });
 
-  const typed = files.map((f) => ({ f, ext: sniff(f.buffer) }));
-  const bad = typed.find((t) => !t.ext);
-  if (bad) return res.status(400).json({ message: `${bad.f.originalname} isn't a JPG, PNG, GIF or WebP image` });
+  const bad = files.find((f) => !sniff(f.buffer));
+  if (bad) return res.status(400).json({ message: `${bad.originalname} isn't a JPG, PNG, GIF or WebP image` });
 
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  const base = (process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const urls = [];
-  for (const { f, ext } of typed) {
-    const name = `${crypto.randomBytes(12).toString("hex")}.${ext}`;
-    await fs.writeFile(path.join(UPLOAD_DIR, name), f.buffer);
-    urls.push(`${base}/uploads/${name}`);
+  for (const f of files) {
+    const result = await toCloudinary(f.buffer);
+    urls.push(result.secure_url);
   }
   audit(req, "upload.images", { type: "upload" }, { count: urls.length });
   res.status(201).json({ urls });
