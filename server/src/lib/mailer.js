@@ -15,8 +15,10 @@ const getTransporter = () => {
 
 // "Cartiva <me@gmail.com>" -> { name, email }
 const parseFrom = (s = "") => {
-  const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(s);
-  return m ? { name: m[1].trim() || "Cartiva", email: m[2].trim() } : { name: "Cartiva", email: s.trim() };
+  const v = s.trim().replace(/^"(.*)"$/, "$1");
+  const m = /^(.*?)\s*<([^>]+)>$/.exec(v);
+  if (m) return { name: m[1].replace(/"/g, "").trim() || "Cartiva", email: m[2].trim() };
+  return { name: "Cartiva", email: v };
 };
 
 export const sendMail = async ({ to, subject, html, text }) => {
