@@ -7,6 +7,7 @@ import { Printer } from "lucide-react";
 import { apiFetch, errorMessage } from "@/lib/api";
 import { btnPrimary, fmtDate } from "@/components/dashboard/ui";
 import type { AdminOrder } from "../page";
+import { money } from "@/lib/api";
 
 const SlipPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +46,7 @@ const SlipPage = () => {
             <div className="mt-4 inline-block border-2 border-black px-3 py-1 font-bold uppercase">{order.shippingMethod.label}</div>
           )}
           {order.payment?.method === "cod" && order.payment.status !== "paid" && (
-            <div className="mt-4 text-xl font-bold">COLLECT ON DELIVERY: ${order.total.toFixed(2)}</div>
+            <div className="mt-4 text-xl font-bold">COLLECT ON DELIVERY: {money(order.total)}</div>
           )}
         </div>
 

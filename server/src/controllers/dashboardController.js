@@ -29,8 +29,8 @@ export const overview = async (req, res) => {
   const counted = orders.filter((o) => o.status !== "cancelled");
   const totalSpent = counted.reduce((s, o) => s + o.total, 0);
   const points = Math.floor(
-    orders.filter((o) => o.status === "delivered").reduce((s, o) => s + o.total, 0)
-  );
+  orders.filter((o) => o.status === "delivered").reduce((s, o) => s + o.total, 0) / 100
+);
   const activeOrders = orders.filter((o) => ["pending", "paid", "shipped"].includes(o.status)).length;
 
   const now = new Date();

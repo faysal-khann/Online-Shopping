@@ -10,7 +10,7 @@ const AboutPage = () => (
     </p>
     <div className="grid sm:grid-cols-3 gap-4 my-8">
       {[
-        ["Fair pricing", "Free standard shipping on orders over $100."],
+        ["Fair pricing", "Free standard shipping on orders over ৳2,000."],
         ["Easy returns", "Return delivered items within 14 days."],
         ["Secure checkout", "Card details are never stored."],
       ].map(([t, d]) => (

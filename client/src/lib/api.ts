@@ -85,7 +85,13 @@ export async function getCategories(): Promise<Category[]> {
   return categories;
 }
 
-export const money = (n: number) => `$${n.toFixed(2)}`;
+export const CURRENCY = "৳";
+
+export const money = (n: number) =>
+  `${CURRENCY}${n.toLocaleString("en-US", {
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export const errorMessage = (e: unknown) =>
   e instanceof Error ? e.message : "Something went wrong";

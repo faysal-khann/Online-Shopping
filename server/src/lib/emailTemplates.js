@@ -1,7 +1,9 @@
+import { money } from "./money.js";
+
 const esc = (s = "") =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const money = (n) => `$${Number(n).toFixed(2)}`;
+
 const clientUrl = () => process.env.CLIENT_URL || "http://localhost:3000";
 
 const button = (href, label) =>

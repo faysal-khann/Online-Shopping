@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { PLACEHOLDER_IMG, finalPrice } from "@/lib/api";
+import { PLACEHOLDER_IMG, finalPrice,money } from "@/lib/api";
 
 const CartModal = ({ onClose }: { onClose?: () => void }) => {
   const { user } = useAuth();
@@ -33,7 +33,7 @@ const CartModal = ({ onClose }: { onClose?: () => void }) => {
                   <div>
                     <div className="flex items-center justify-between gap-8">
                       <h2 className="font-semibold">{item.product.name}</h2>
-                      <div className="p-1 bg-gray-50 rounded-md">${finalPrice(item.product)}</div>
+                      <div className="p-1 bg-gray-50 rounded-md">{money(finalPrice(item.product))}</div>
                     </div>
                     <div className="text-sm text-gray-500">
                       {[item.color, item.size].filter(Boolean).join(" / ") || "available"}
@@ -56,7 +56,7 @@ const CartModal = ({ onClose }: { onClose?: () => void }) => {
           <div>
             <div className="flex items-center font-semibold justify-between">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{money(subtotal)}</span>
             </div>
             <p className="text-sm text-gray-500 mt-2 mb-4">
               Shipping and tax are calculated at checkout.

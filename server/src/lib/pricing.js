@@ -1,6 +1,6 @@
 export const SHIPPING_METHODS = {
-  standard: { key: "standard", label: "Standard delivery", eta: "3-5 business days", fee: 5, freeOver: 100 },
-  express: { key: "express", label: "Express delivery", eta: "1-2 business days", fee: 12, freeOver: null },
+  standard: { key: "standard", label: "Standard delivery", eta: "3-5 business days", fee: 60, freeOver: 2000 },
+  express: { key: "express", label: "Express delivery", eta: "1-2 business days", fee: 120, freeOver: null },
 };
 
 export const TAX_RATE = 0.05;

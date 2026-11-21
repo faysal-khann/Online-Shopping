@@ -89,8 +89,8 @@ const ProductForm = ({ product, categories, onClose, onSaved }: Props) => {
         <label className={label}>Description<textarea className={input} rows={3} value={f.description} onChange={set("description")} /></label>
 
         <div className="grid grid-cols-3 gap-4">
-          <label className={label}>Price ($)<input className={input} type="number" min="0" step="0.01" value={f.price} onChange={set("price")} required /></label>
-          <label className={label}>Discount ($)<input className={input} type="number" min="0" step="0.01" value={f.discountPrice} onChange={set("discountPrice")} placeholder="optional" /></label>
+          <label className={label}>Price (৳)<input className={input} type="number" min="0" step="0.01" value={f.price} onChange={set("price")} required /></label>
+          <label className={label}>Discount (৳)<input className={input} type="number" min="0" step="0.01" value={f.discountPrice} onChange={set("discountPrice")} placeholder="optional" /></label>
           <label className={label}>Stock<input className={input} type="number" min="0" step="1" value={f.stock} onChange={set("stock")} required /></label>
         </div>
 

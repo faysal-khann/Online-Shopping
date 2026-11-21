@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { finalPrice, getProducts, PLACEHOLDER_IMG } from "../lib/api";
+import { finalPrice, getProducts, PLACEHOLDER_IMG,money } from "../lib/api";
 
 type Props = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -21,7 +21,7 @@ const ProductList = async ({
       if (typeof v === "string" && v && k !== "page") qs.set(k, v);
     }
     qs.set("page", String(n));
-    return `/list?${qs.toString()}`;
+    return `/list?৳{qs.toString()}`;
   };
 
   if (products.length === 0) {
@@ -60,10 +60,10 @@ const ProductList = async ({
             <div className="flex justify-between">
               <span className="font-medium">{product.name}</span>
               <span className="font-semibold">
-                ${finalPrice(product)}
+                {money(finalPrice(product))}
                 {product.discountPrice != null && (
                   <span className="ml-2 text-xs text-gray-400 line-through">
-                    ${product.price}
+                    {money(product.price)}
                   </span>
                 )}
               </span>

@@ -4,7 +4,7 @@ import ProductPurchase from "@/components/ProductPurchase";
 import TrackView from "@/components/TrackView";
 import WishlistButton from "@/components/WishlistButton";
 import ProductReviews from "@/components/ProductReviews";
-import { finalPrice, getProduct } from "@/lib/api";
+import { finalPrice, getProduct ,money} from "@/lib/api";
 
 const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;
@@ -33,11 +33,11 @@ const SinglePage = async ({ params }: { params: Promise<{ slug: string }> }) => 
 
         {product.discountPrice != null ? (
           <div className="flex items-center gap-4">
-            <h3 className="text-xl text-gray-500 line-through">${product.price}</h3>
-            <h2 className="font-medium text-2xl">${finalPrice(product)}</h2>
+            <h3 className="text-xl text-gray-500 line-through">{money(product.price)}</h3>
+            <h2 className="font-medium text-2xl">৳{finalPrice(product)}</h2>
           </div>
         ) : (
-          <h2 className="font-medium text-2xl">${product.price}</h2>
+          <h2 className="font-medium text-2xl">{money(product.price)}</h2>
         )}
 
         <div className="h-[2px] bg-gray-100" />

@@ -137,7 +137,7 @@ const AdminDashboard = () => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} tick={{ fontSize: 11 }} minTickGap={24} />
-              <YAxis tick={{ fontSize: 11 }} width={48} tickFormatter={(v: number) => `$${v}`} />
+              <YAxis tick={{ fontSize: 11 }} width={60} tickFormatter={(v: number) => `৳${v}`} />
               <Tooltip formatter={(v) => money(Number(v))} labelFormatter={(l) => String(l)} />
               <Area type="monotone" dataKey="revenue" stroke="#f35c7a" strokeWidth={2} fill="url(#rev)" />
             </AreaChart>

@@ -159,9 +159,9 @@ const AdminCoupons = () => {
           </div>
           <label className={label}>Description (optional)<input className={input} value={f.description} onChange={set("description")} maxLength={200} /></label>
           <div className="grid grid-cols-3 gap-4">
-            <label className={label}>{f.type === "percent" ? "Percent" : "Amount ($)"}<input className={input} type="number" min="0" step="0.01" value={f.value} onChange={set("value")} required /></label>
-            <label className={label}>Min spend ($)<input className={input} type="number" min="0" step="0.01" value={f.minSubtotal} onChange={set("minSubtotal")} placeholder="none" /></label>
-            {f.type === "percent" && <label className={label}>Max discount ($)<input className={input} type="number" min="0" step="0.01" value={f.maxDiscount} onChange={set("maxDiscount")} placeholder="none" /></label>}
+            <label className={label}>{f.type === "percent" ? "Percent" : "Amount (৳)"}<input className={input} type="number" min="0" step="0.01" value={f.value} onChange={set("value")} required /></label>
+            <label className={label}>Min spend (৳)<input className={input} type="number" min="0" step="0.01" value={f.minSubtotal} onChange={set("minSubtotal")} placeholder="none" /></label>
+            {f.type === "percent" && <label className={label}>Max discount (৳)<input className={input} type="number" min="0" step="0.01" value={f.maxDiscount} onChange={set("maxDiscount")} placeholder="none" /></label>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <label className={label}>Total uses<input className={input} type="number" min="1" step="1" value={f.maxUses} onChange={set("maxUses")} placeholder="unlimited" /></label>

@@ -1,6 +1,6 @@
 import Coupon from "../models/Coupon.js";
 import Order from "../models/Order.js";
-
+import { money } from "./money.js";
 const round = (n) => Math.round(n * 100) / 100;
 
 export const couponStatus = (c, now = new Date()) => {
@@ -25,7 +25,7 @@ export async function evaluateCoupon(code, subtotal, userId) {
   const status = couponStatus(coupon);
   if (status !== "active") return { error: MESSAGES[status] };
   if (subtotal < coupon.minSubtotal)
-    return { error: `Spend at least $${coupon.minSubtotal.toFixed(2)} to use this coupon` };
+    return { error: `Spend at least ${money(coupon.minSubtotal)} to use this coupon` };
 
   const timesUsed = await Order.countDocuments({
     user: userId,
