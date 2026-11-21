@@ -42,10 +42,15 @@ export const uploadImages = async (req, res) => {
   const bad = files.find((f) => !sniff(f.buffer));
   if (bad) return res.status(400).json({ message: `${bad.originalname} isn't a JPG, PNG, GIF or WebP image` });
 
-  const urls = [];
-  for (const f of files) {
-    const result = await toCloudinary(f.buffer);
-    urls.push(result.secure_url);
+    const urls = [];
+  try {
+    for (const f of files) {
+      const result = await toCloudinary(f.buffer);
+      urls.push(result.secure_url);
+    }
+  } catch (e) {
+    console.error("Cloudinary upload failed:", e?.message, e?.http_code, e?.error?.message);
+    return res.status(502).json({ message: e?.message || "Image upload failed" });
   }
   audit(req, "upload.images", { type: "upload" }, { count: urls.length });
   res.status(201).json({ urls });
