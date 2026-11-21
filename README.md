@@ -10,8 +10,7 @@ A **MERN-style e-commerce application**: a **Next.js** storefront and customer d
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb)
 
 ---
-**Live site:** `https://cartiva-7qxtte5zj-faysal-8ee5.vercel.app/`
-
+**Live site:** [Cartiva](https://cartiva-7qxtte5zj-faysal-8ee5.vercel.app/)
 
 ## Table of Contents
 
