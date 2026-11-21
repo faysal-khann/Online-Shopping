@@ -8,8 +8,19 @@ import VerifyBanner from "@/components/VerifyBanner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lama Dev E-Commerce Application",
-  description: "A complete e-commerce application with Next.js and Wix",
+  title: {
+    default: "Cartiva | Online Store",
+    template: "%s | Cartiva",
+  },
+  description:
+    "Shop clothing, electronics, home and accessories at Cartiva. Fast checkout, easy returns and order tracking.",
+  icons: { icon: "/logo.png" },
+  openGraph: {
+    title: "Cartiva | Online Store",
+    description: "Shop clothing, electronics, home and accessories at Cartiva.",
+    siteName: "Cartiva",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
